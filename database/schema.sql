@@ -5,10 +5,11 @@
 
 CREATE TABLE IF NOT EXISTS courses (
     id          BIGSERIAL PRIMARY KEY,
-    course_code VARCHAR(20)  NOT NULL UNIQUE,
-    name        VARCHAR(150) NOT NULL,
-    level       VARCHAR(50)  NOT NULL,
-    duration    VARCHAR(50)  NOT NULL
+    course_code VARCHAR(20)    NOT NULL UNIQUE,
+    name        VARCHAR(150)   NOT NULL,
+    level       VARCHAR(50)    NOT NULL,
+    duration    VARCHAR(50)    NOT NULL,
+    course_fee  NUMERIC(10, 2) NOT NULL DEFAULT 50000.00
 );
 
 CREATE TABLE IF NOT EXISTS students (
@@ -37,4 +38,11 @@ CREATE TABLE IF NOT EXISTS attendance (
     CONSTRAINT uk_attendance_student_course_date UNIQUE (student_id, course_id, attendance_date)
 );
 
--- The postgres user that pgAdmin uses owns these tables.
+CREATE TABLE IF NOT EXISTS payments (
+    id             BIGSERIAL PRIMARY KEY,
+    receipt_number VARCHAR(30)    NOT NULL UNIQUE,
+    enrolment_id   BIGINT         NOT NULL REFERENCES enrolments (id) ON DELETE CASCADE,
+    amount         NUMERIC(10, 2) NOT NULL CHECK (amount > 0),
+    payment_date   DATE           NOT NULL DEFAULT CURRENT_DATE,
+    payment_method VARCHAR(30)    NOT NULL
+);

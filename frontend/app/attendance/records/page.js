@@ -88,8 +88,15 @@ export default function AttendanceRecordsPage() {
                 <div className="percent-value">{formatPercent(summary.percentage)}</div>
               </div>
               <div>
-                <h2 className="section-title" style={{ marginBottom: 4 }}>{summary.studentName}</h2>
-                <p className="muted" style={{ marginTop: 0 }}>NIC {summary.nic}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <h2 className="section-title" style={{ margin: 0 }}>{summary.studentName}</h2>
+                  {summary.isEligible !== null && summary.isEligible !== undefined && (
+                    <span className={`badge ${summary.isEligible ? "eligible" : "ineligible"}`}>
+                      {summary.isEligible ? "✓ Exam Eligible (≥ 80%)" : "⚠ Ineligible (< 80%)"}
+                    </span>
+                  )}
+                </div>
+                <p className="muted" style={{ marginTop: 4 }}>NIC {summary.nic}</p>
                 <p>
                   {summary.presentCount} present · {summary.absentCount} absent · {summary.totalSessions}{" "}
                   {summary.totalSessions === 1 ? "session" : "sessions"}
@@ -104,7 +111,14 @@ export default function AttendanceRecordsPage() {
                 <div className="breakdown">
                   {summary.courses.map((course) => (
                     <article key={course.courseId}>
-                      <span className="pill">{course.courseCode}</span>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span className="pill">{course.courseCode}</span>
+                        {course.isEligible !== null && course.isEligible !== undefined && (
+                          <span className={`badge ${course.isEligible ? "eligible" : "ineligible"}`} style={{ fontSize: 11, minWidth: "auto" }}>
+                            {course.isEligible ? "≥ 80%" : "< 80%"}
+                          </span>
+                        )}
+                      </div>
                       <p style={{ margin: "8px 0 4px" }}>{course.courseName}</p>
                       <strong>{formatPercent(course.percentage)}</strong>
                       <span className="muted">{course.presentCount} of {course.totalSessions} present</span>

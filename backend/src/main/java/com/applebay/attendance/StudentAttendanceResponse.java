@@ -11,6 +11,7 @@ public record StudentAttendanceResponse(
         long presentCount,
         long absentCount,
         Double percentage,
+        Boolean isEligible,
         List<CourseBreakdown> courses,
         List<RecordItem> records
 ) {
@@ -20,7 +21,8 @@ public record StudentAttendanceResponse(
             String courseName,
             long totalSessions,
             long presentCount,
-            Double percentage
+            Double percentage,
+            Boolean isEligible
     ) {
     }
 

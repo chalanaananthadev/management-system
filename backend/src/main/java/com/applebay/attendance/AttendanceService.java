@@ -105,13 +105,16 @@ public class AttendanceService {
                 .map(list -> {
                     Attendance sample = list.get(0);
                     long coursePresent = list.stream().filter(record -> record.getStatus() == AttendanceStatus.PRESENT).count();
+                    Double coursePct = percentage(coursePresent, list.size());
+                    Boolean eligible = coursePct != null ? coursePct >= 80.0 : null;
                     return new StudentAttendanceResponse.CourseBreakdown(
                             sample.getCourse().getId(),
                             sample.getCourse().getCourseCode(),
                             sample.getCourse().getName(),
                             list.size(),
                             coursePresent,
-                            percentage(coursePresent, list.size())
+                            coursePct,
+                            eligible
                     );
                 })
                 .sorted(Comparator.comparing(StudentAttendanceResponse.CourseBreakdown::courseCode))
@@ -128,6 +131,9 @@ public class AttendanceService {
                 ))
                 .toList();
 
+        Double totalPct = percentage(presentCount, total);
+        Boolean isOverallEligible = totalPct != null ? totalPct >= 80.0 : null;
+
         return new StudentAttendanceResponse(
                 student.getId(),
                 student.getName(),
@@ -135,7 +141,8 @@ public class AttendanceService {
                 total,
                 presentCount,
                 total - presentCount,
-                percentage(presentCount, total),
+                totalPct,
+                isOverallEligible,
                 courses,
                 items
         );

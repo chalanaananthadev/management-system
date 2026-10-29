@@ -74,6 +74,7 @@ public class CourseService {
         course.setName(request.name().trim());
         course.setLevel(request.level().trim());
         course.setDuration(request.duration().trim());
+        course.setCourseFee(request.courseFee() != null ? request.courseFee() : java.math.BigDecimal.valueOf(50000.00));
     }
 
     private String normaliseCode(String courseCode) {
@@ -89,7 +90,8 @@ public class CourseService {
                 course.getCourseCode(),
                 course.getName(),
                 course.getLevel(),
-                course.getDuration()
+                course.getDuration(),
+                course.getCourseFee()
         );
     }
 }

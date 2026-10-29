@@ -40,6 +40,11 @@ public class StudentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(studentService.create(request));
     }
 
+    @PostMapping("/onboard")
+    public ResponseEntity<StudentOnboardingResponse> onboard(@Valid @RequestBody StudentOnboardingRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(studentService.onboard(request));
+    }
+
     @PutMapping("/{id}")
     public StudentResponse update(@PathVariable Long id, @Valid @RequestBody StudentRequest request) {
         return studentService.update(id, request);

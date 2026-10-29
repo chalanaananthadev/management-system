@@ -1,6 +1,7 @@
 frontend/node_modules/
 frontend/.next/
 backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
 .DS_Store
-
-entro;;/
+Thumbs.db
+*.log

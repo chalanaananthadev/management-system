@@ -32,4 +32,7 @@ public class Course {
 
     @Column(nullable = false, length = 50)
     private String duration;
+
+    @Column(name = "course_fee", nullable = false, precision = 10, scale = 2)
+    private java.math.BigDecimal courseFee = java.math.BigDecimal.valueOf(50000.00);
 }

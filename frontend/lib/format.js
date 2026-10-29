@@ -22,3 +22,13 @@ export function formatPercent(value) {
   }
   return `${Number(value).toFixed(1)}%`;
 }
+
+export function formatCurrency(value) {
+  if (value === null || value === undefined) {
+    return "0.00";
+  }
+  return Number(value).toLocaleString("en-LK", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}

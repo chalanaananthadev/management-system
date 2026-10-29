@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { Banner, Field, PageHeader } from "../../components/ui";
 import { api } from "../../lib/api";
+import { formatCurrency } from "../../lib/format";
 
-const EMPTY_FORM = { courseCode: "", name: "", level: "HND", duration: "" };
+const EMPTY_FORM = { courseCode: "", name: "", level: "HND", duration: "", courseFee: "50000" };
 const LEVELS = ["HND", "Certificate"];
 
 export default function CoursesPage() {
@@ -39,6 +40,7 @@ export default function CoursesPage() {
       name: course.name,
       level: course.level,
       duration: course.duration,
+      courseFee: String(course.courseFee ?? 50000),
     });
     setSuccess("");
     setError("");
@@ -55,11 +57,15 @@ export default function CoursesPage() {
     setError("");
     setSuccess("");
     try {
+      const payload = {
+        ...form,
+        courseFee: Number(form.courseFee),
+      };
       if (editingId) {
-        await api(`/courses/${editingId}`, { method: "PUT", body: JSON.stringify(form) });
+        await api(`/courses/${editingId}`, { method: "PUT", body: JSON.stringify(payload) });
         setSuccess("Course updated.");
       } else {
-        await api("/courses", { method: "POST", body: JSON.stringify(form) });
+        await api("/courses", { method: "POST", body: JSON.stringify(payload) });
         setSuccess("Course saved.");
       }
       cancelEdit();
@@ -72,7 +78,7 @@ export default function CoursesPage() {
   }
 
   async function onDelete(course) {
-    if (!window.confirm(`Delete ${course.courseCode}? Enrolments and attendance for this course will also be removed.`)) {
+    if (!window.confirm(`Delete ${course.courseCode}? Enrolments, attendance and payments for this course will also be removed.`)) {
       return;
     }
     setError("");
@@ -96,7 +102,7 @@ export default function CoursesPage() {
       <PageHeader
         eyebrow="Courses"
         title="Course catalogue"
-        text="Add, update and delete HND programmes and certificate courses. Each course needs a code, name, level and duration."
+        text="Add, update and delete HND programmes and certificate courses. Each course needs a code, name, level, duration and fee."
       />
       <Banner error={error} success={success} />
       <div className="split">
@@ -118,6 +124,18 @@ export default function CoursesPage() {
             </Field>
             <Field label="Duration">
               <input name="duration" value={form.duration} onChange={updateField} maxLength={50} required placeholder="2 years" />
+            </Field>
+            <Field label="Course fee (LKR)">
+              <input
+                name="courseFee"
+                type="number"
+                step="0.01"
+                min="1"
+                value={form.courseFee}
+                onChange={updateField}
+                required
+                placeholder="150000.00"
+              />
             </Field>
           </div>
           <div className="actions">
@@ -142,6 +160,7 @@ export default function CoursesPage() {
                     <th>Name</th>
                     <th>Level</th>
                     <th>Duration</th>
+                    <th>Fee</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -152,6 +171,7 @@ export default function CoursesPage() {
                       <td>{course.name}</td>
                       <td><span className="pill">{course.level}</span></td>
                       <td>{course.duration}</td>
+                      <td><strong>LKR {formatCurrency(course.courseFee)}</strong></td>
                       <td>
                         <div className="row-actions">
                           <button className="btn ghost" type="button" onClick={() => startEdit(course)}>Edit</button>

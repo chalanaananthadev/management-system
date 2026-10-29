@@ -1,5 +1,6 @@
 package com.applebay.enrolment;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record EnrolmentResponse(
@@ -10,6 +11,10 @@ public record EnrolmentResponse(
         Long courseId,
         String courseCode,
         String courseName,
-        LocalDate enrolledOn
+        LocalDate enrolledOn,
+        BigDecimal courseFee,
+        BigDecimal totalPaid,
+        BigDecimal balanceRemaining,
+        String latestReceiptNumber
 ) {
 }
