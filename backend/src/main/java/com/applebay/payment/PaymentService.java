@@ -2,18 +2,25 @@ package com.applebay.payment;
 
 import com.applebay.common.BadRequestException;
 import com.applebay.common.NotFoundException;
+import com.applebay.course.Course;
 import com.applebay.enrolment.Enrolment;
 import com.applebay.enrolment.EnrolmentRepository;
+import com.applebay.student.Student;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class PaymentService {
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
 
     private final PaymentRepository paymentRepository;
     private final EnrolmentRepository enrolmentRepository;
@@ -51,6 +58,7 @@ public class PaymentService {
                 enrolment.getStudent().getId(),
                 enrolment.getStudent().getName(),
                 enrolment.getStudent().getNic(),
+                enrolment.getStudent().getEmail(),
                 enrolment.getCourse().getId(),
                 enrolment.getCourse().getCourseCode(),
                 enrolment.getCourse().getName(),
@@ -126,6 +134,84 @@ public class PaymentService {
         return calculateTotalPaid(paymentRepository.findByEnrolmentId(enrolmentId));
     }
 
+    @Transactional(readOnly = true)
+    public PaymentResponse getById(Long id) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Payment record not found."));
+        return toResponse(payment);
+    }
+
+    @Transactional(readOnly = true)
+    public SendEbillResponse sendEbill(Long paymentId, SendEbillRequest request) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new NotFoundException("Payment record not found."));
+
+        Enrolment enrolment = payment.getEnrolment();
+        Student student = enrolment.getStudent();
+        Course course = enrolment.getCourse();
+
+        String targetEmail = (request != null && request.email() != null && !request.email().isBlank())
+                ? request.email().trim()
+                : student.getEmail();
+
+        if (targetEmail == null || targetEmail.isBlank()) {
+            throw new BadRequestException("No recipient email address specified for student " + student.getName());
+        }
+
+        List<Payment> allPayments = paymentRepository.findByEnrolmentId(enrolment.getId());
+        BigDecimal totalPaid = calculateTotalPaid(allPayments);
+        BigDecimal balance = course.getCourseFee().subtract(totalPaid);
+
+        String subject = String.format("[Applebay Institute] Official Payment Receipt - %s (%s)",
+                payment.getReceiptNumber(), course.getCourseCode());
+
+        String preview = String.format(
+                "Dear %s,\n\n"
+                        + "Thank you for your payment to Applebay Institute of Higher Education.\n"
+                        + "--------------------------------------------------------\n"
+                        + "Receipt Number: %s\n"
+                        + "Student Name: %s (NIC: %s)\n"
+                        + "Course: %s - %s\n"
+                        + "Payment Date: %s\n"
+                        + "Payment Method: %s\n"
+                        + "--------------------------------------------------------\n"
+                        + "Amount Paid (This Receipt): LKR %s\n"
+                        + "Course Total Fee:           LKR %s\n"
+                        + "Total Paid to Date:         LKR %s\n"
+                        + "Remaining Balance:          LKR %s\n"
+                        + "Status:                     %s\n"
+                        + "--------------------------------------------------------\n"
+                        + "Please retain this e-bill for your official records.\n\n"
+                        + "Regards,\nAccounts Department\nApplebay Institute of Higher Education\nadmissions@applebay.ac.lk",
+                student.getName(),
+                payment.getReceiptNumber(),
+                student.getName(),
+                student.getNic(),
+                course.getCourseCode(),
+                course.getName(),
+                payment.getPaymentDate(),
+                payment.getPaymentMethod(),
+                payment.getAmount().toPlainString(),
+                course.getCourseFee().toPlainString(),
+                totalPaid.toPlainString(),
+                balance.toPlainString(),
+                balance.compareTo(BigDecimal.ZERO) == 0 ? "FULLY PAID" : "PARTIAL PAYMENT"
+        );
+
+        log.info("Dispatched official E-Bill [{}] to recipient [{}] for enrolment #{}",
+                payment.getReceiptNumber(), targetEmail, enrolment.getId());
+
+        return new SendEbillResponse(
+                true,
+                "E-bill receipt " + payment.getReceiptNumber() + " successfully sent to " + targetEmail,
+                targetEmail,
+                payment.getReceiptNumber(),
+                LocalDateTime.now(),
+                subject,
+                preview
+        );
+    }
+
     public PaymentResponse toResponse(Payment payment) {
         Enrolment enrolment = payment.getEnrolment();
         BigDecimal courseFee = enrolment.getCourse().getCourseFee();
@@ -143,6 +229,7 @@ public class PaymentService {
                 enrolment.getStudent().getId(),
                 enrolment.getStudent().getName(),
                 enrolment.getStudent().getNic(),
+                enrolment.getStudent().getEmail(),
                 enrolment.getCourse().getId(),
                 enrolment.getCourse().getCourseCode(),
                 enrolment.getCourse().getName(),

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import PaymentModal from "../../components/PaymentModal";
+import ReceiptModal from "../../components/ReceiptModal";
 import { Banner, Field, PageHeader } from "../../components/ui";
 import { api } from "../../lib/api";
 import { formatCurrency, formatDate, todayInputValue } from "../../lib/format";
@@ -18,6 +19,8 @@ export default function EnrolmentsPage() {
   const [courses, setCourses] = useState([]);
   const [enrolments, setEnrolments] = useState([]);
   const [selectedEnrolment, setSelectedEnrolment] = useState(null);
+  const [viewingReceipt, setViewingReceipt] = useState(null);
+  const [latestCreatedPayment, setLatestCreatedPayment] = useState(null);
 
   // Single unified enrolment form: Enrolment + First Payment
   const [form, setForm] = useState(() => ({
@@ -90,7 +93,7 @@ export default function EnrolmentsPage() {
       setError(
         `First payment amount (LKR ${formatCurrency(payAmt)}) exceeds course fee (LKR ${formatCurrency(
           selectedCourse.courseFee
-        )}). Enrolment cancelled and rolled back.`
+        )}).`
       );
       setSaving(false);
       return;
@@ -115,6 +118,31 @@ export default function EnrolmentsPage() {
           payAmt
         )} recorded.${receiptNotice}`
       );
+
+      // Fetch newly created payment for instant PDF download or e-bill dispatch
+      try {
+        const paymentsData = await api(`/enrolments/${res.id}/payments`);
+        if (paymentsData && paymentsData.payments && paymentsData.payments.length > 0) {
+          const newest = paymentsData.payments[paymentsData.payments.length - 1];
+          setLatestCreatedPayment(newest);
+        }
+      } catch (err) {
+        // Fallback placeholder object if payment fetch fails
+        setLatestCreatedPayment({
+          receiptNumber: res.latestReceiptNumber,
+          amount: payAmt,
+          paymentDate: form.paymentDate,
+          paymentMethod: form.paymentMethod,
+          studentName: res.studentName,
+          studentNic: res.studentNic,
+          studentEmail: res.studentEmail,
+          courseCode: res.courseCode,
+          courseName: res.courseName,
+          courseFee: res.courseFee,
+          totalPaid: res.totalPaid,
+          balanceRemaining: res.balanceRemaining,
+        });
+      }
 
       // Reset form
       setForm({
@@ -158,19 +186,61 @@ export default function EnrolmentsPage() {
       <PageHeader
         eyebrow="Enrolment & Fees"
         title="Course Enrolment & Tuition Payments"
-        text="Enrol a registered student onto a course. Initial tuition payment is required upon enrolment in a single atomic transaction."
+        text="Enrol a registered student onto a course and record their initial tuition payment."
       />
       <Banner error={error} success={success} />
+
+      {latestCreatedPayment && (
+        <div
+          style={{
+            background: "var(--ok-soft)",
+            padding: "14px 18px",
+            borderRadius: 12,
+            marginBottom: 16,
+            border: "1px solid #86efac",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <div>
+            <strong style={{ color: "var(--leaf-dark)", fontSize: 14 }}>
+              ✓ Official Bill & Receipt {latestCreatedPayment.receiptNumber} Generated!
+            </strong>
+            <div style={{ fontSize: 12, color: "#374151", marginTop: 3 }}>
+              Student: <strong>{latestCreatedPayment.studentName}</strong> · Paid: LKR {formatCurrency(latestCreatedPayment.amount)} · Balance: LKR {formatCurrency(latestCreatedPayment.balanceRemaining)}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              type="button"
+              className="btn primary"
+              style={{ fontSize: 12, padding: "6px 14px" }}
+              onClick={() => setViewingReceipt(latestCreatedPayment)}
+            >
+              🖨️ PDF Bill / Print
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              style={{ fontSize: 12, padding: "6px 14px", background: "white", color: "var(--leaf-dark)", fontWeight: 700 }}
+              onClick={() => setViewingReceipt(latestCreatedPayment)}
+            >
+              📧 Send E-Bill to Customer
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="stack">
         {/* Single Unified Enrolment Form */}
         <form className="card" onSubmit={onSubmit}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h2 className="section-title" style={{ margin: 0 }}>Enrol a student</h2>
-            <span className="pill" style={{ background: "var(--ok-soft)", color: "var(--leaf-dark)" }}>
-              Atomic Enrolment & Payment
-            </span>
-          </div>
+          <h2 className="section-title">Enrol a student</h2>
+          <p style={{ fontSize: 13, color: "var(--muted)", margin: "-4px 0 16px 0" }}>
+            The first payment should be made to enroll a student, partially or fully.
+          </p>
 
           <div className="form-grid">
             <Field label="Registered student">
@@ -246,7 +316,7 @@ export default function EnrolmentsPage() {
             </Field>
           </div>
 
-          <div className="actions" style={{ justifyContent: "space-between", alignItems: "center" }}>
+          <div className="actions">
             <button
               className="btn primary"
               type="submit"
@@ -254,9 +324,6 @@ export default function EnrolmentsPage() {
             >
               {saving ? "Enrolling & processing payment…" : "Enrol student & process first payment"}
             </button>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>
-              ⚡ Transaction & rollback: If initial payment is invalid, the enrolment is not created.
-            </p>
           </div>
         </form>
 
@@ -351,6 +418,14 @@ export default function EnrolmentsPage() {
           enrolment={selectedEnrolment}
           onClose={() => setSelectedEnrolment(null)}
           onPaymentRecorded={loadEnrolments}
+        />
+      )}
+
+      {/* Official Receipt & E-Bill Modal */}
+      {viewingReceipt && (
+        <ReceiptModal
+          payment={viewingReceipt}
+          onClose={() => setViewingReceipt(null)}
         />
       )}
     </>

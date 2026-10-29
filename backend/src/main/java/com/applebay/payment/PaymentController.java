@@ -33,6 +33,19 @@ public class PaymentController {
         return paymentService.recordPayment(request);
     }
 
+    @GetMapping("/payments/{id}")
+    public PaymentResponse getPaymentById(@PathVariable Long id) {
+        return paymentService.getById(id);
+    }
+
+    @PostMapping("/payments/{id}/email")
+    public SendEbillResponse sendEbill(
+            @PathVariable Long id,
+            @RequestBody(required = false) SendEbillRequest request
+    ) {
+        return paymentService.sendEbill(id, request);
+    }
+
     @GetMapping("/enrolments/{id}/payments")
     public EnrolmentPaymentsResponse getPaymentsByEnrolment(@PathVariable Long id) {
         return paymentService.getPaymentsForEnrolment(id);

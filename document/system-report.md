@@ -86,7 +86,7 @@ The system addresses critical academic operational challenges:
 
 ## 4. Key Business Logic Implementations
 
-### 4.1 Payment Balance Enforcement & Receipt Generation
+### 4.1 Payment Balance Enforcement, PDF Bill Generation & Customer E-Bill Dispatch
 1. **Rule**: $\text{amount} \le (\text{course\_fee} - \text{total\_paid})$.
    - The backend retrieves the total amount previously paid for the given `enrolment_id`.
    - Remaining balance is computed as $\text{balance} = \text{course\_fee} - \text{total\_paid}$.
@@ -95,6 +95,13 @@ The system addresses critical academic operational challenges:
 2. **Receipt Number Formatting**:
    - Receipts follow the standard structure `REC-YYYY-XXXX` (e.g. `REC-2026-0001`).
    - The number sequence auto-increments based on existing receipts for the calendar year.
+3. **Official PDF Bill / Receipt Printing**:
+   - A dedicated `ReceiptModal` provides an official electronic invoice containing institute letterhead, verification stamp, student ID, course details, itemized fee breakdown, cumulative amount paid, and outstanding balance.
+   - Responsive print stylesheets (`@media print`) allow one-click export directly to an A4 PDF document or physical printer without website chrome or navigation artifacts.
+4. **Customer E-Bill Email Notification**:
+   - Endpoint `POST /api/payments/{id}/email` enables immediate dispatch of the electronic bill to the customer's email address.
+   - The e-bill provides students with transparent visibility into their tuition payment history, recent installment receipt, and remaining financial obligations.
+   - Direct desktop mail client integration (`mailto:`) is also provided as a fallback.
 
 ### 4.2 Attendance Calculation & 80% Rule
 1. Attendance percentage is calculated as:

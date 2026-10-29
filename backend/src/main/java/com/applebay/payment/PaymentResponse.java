@@ -13,6 +13,7 @@ public record PaymentResponse(
         Long studentId,
         String studentName,
         String studentNic,
+        String studentEmail,
         Long courseId,
         String courseCode,
         String courseName,

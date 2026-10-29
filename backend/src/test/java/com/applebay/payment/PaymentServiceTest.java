@@ -175,6 +175,30 @@ class PaymentServiceTest {
         assertEquals("REC-2026-0043", nextReceipt);
     }
 
+    @Test
+    @DisplayName("Send E-Bill dispatches official receipt with email preview")
+    void testSendEbill_Success() {
+        Payment p = new Payment();
+        p.setId(50L);
+        p.setEnrolment(enrolment);
+        p.setAmount(BigDecimal.valueOf(50000.00));
+        p.setPaymentDate(LocalDate.of(2026, 10, 29));
+        p.setPaymentMethod("BANK_TRANSFER");
+        p.setReceiptNumber("REC-2026-0050");
+
+        when(paymentRepository.findById(50L)).thenReturn(Optional.of(p));
+        when(paymentRepository.findByEnrolmentId(100L)).thenReturn(List.of(p));
+
+        SendEbillResponse response = paymentService.sendEbill(50L, new SendEbillRequest("kasun@custom.com", null));
+
+        assertNotNull(response);
+        assertTrue(response.success());
+        assertEquals("kasun@custom.com", response.recipientEmail());
+        assertEquals("REC-2026-0050", response.receiptNumber());
+        assertTrue(response.emailSubject().contains("REC-2026-0050"));
+        assertTrue(response.emailContentPreview().contains("LKR 50000.00"));
+    }
+
     private Payment createSavedPayment(Long id, BigDecimal amount) {
         Payment p = new Payment();
         p.setId(id);

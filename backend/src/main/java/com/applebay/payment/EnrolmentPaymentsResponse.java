@@ -8,6 +8,7 @@ public record EnrolmentPaymentsResponse(
         Long studentId,
         String studentName,
         String studentNic,
+        String studentEmail,
         Long courseId,
         String courseCode,
         String courseName,

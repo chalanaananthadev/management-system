@@ -115,6 +115,7 @@ public class EnrolmentService {
                 enrolment.getStudent().getId(),
                 enrolment.getStudent().getName(),
                 enrolment.getStudent().getNic(),
+                enrolment.getStudent().getEmail(),
                 enrolment.getCourse().getId(),
                 enrolment.getCourse().getCourseCode(),
                 enrolment.getCourse().getName(),

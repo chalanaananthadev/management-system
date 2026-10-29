@@ -23,7 +23,9 @@ Comprehensive verification matrix of the Spring Boot REST endpoints.
 | 17 | `/api/payments` | `POST` | Reject payment exceeding balance | `{"enrolmentId":1,"amount":999999.00,"paymentMethod":"CASH"}` | `400 Bad Request` | `"Payment amount exceeds remaining balance."` |
 | 18 | `/api/payments` | `POST` | Reject non-positive amount | `{"enrolmentId":1,"amount":-500.00,"paymentMethod":"CASH"}` | `400 Bad Request` | `"Payment amount must be greater than zero."` |
 | 19 | `/api/enrolments/{id}/payments` | `GET` | Retrieve payment history and balance for enrolment | None | `200 OK` | Complete statement: `courseFee`, `totalPaid`, `balanceRemaining`, and list of receipts |
-| 19 | `/api/attendance` | `GET` | Attendance sheet for date & course | `?courseId=1&date=2026-10-15` | `200 OK` | Student list with marks (`PRESENT`, `ABSENT`, or `null`) |
-| 20 | `/api/attendance` | `POST` | Bulk mark attendance | `{"courseId":1,"date":"2026-10-29","records":[{"studentId":1,"status":"PRESENT"},{"studentId":2,"status":"ABSENT"}]}` | `200 OK` | Updated attendance sheet |
-| 21 | `/api/attendance/student/{id}` | `GET` | Student attendance breakdown & 80% rule | None | `200 OK` | Total, present, absent counts, percentage, and `isEligible` status flag |
+| 20 | `/api/payments/{id}` | `GET` | Retrieve single receipt / bill | None | `200 OK` | Detailed receipt with student, course, fee, total paid, and balance details |
+| 21 | `/api/payments/{id}/email` | `POST` | Send official electronic bill to customer's email | `{"email":"student@applebay.edu"}` (optional, defaults to student email) | `200 OK` | Dispatches official e-bill with receipt number, itemized fees, and remaining balance |
+| 22 | `/api/attendance` | `GET` | Attendance sheet for date & course | `?courseId=1&date=2026-10-15` | `200 OK` | Student list with marks (`PRESENT`, `ABSENT`, or `null`) |
+| 23 | `/api/attendance` | `POST` | Bulk mark attendance | `{"courseId":1,"date":"2026-10-29","records":[{"studentId":1,"status":"PRESENT"},{"studentId":2,"status":"ABSENT"}]}` | `200 OK` | Updated attendance sheet |
+| 24 | `/api/attendance/student/{id}` | `GET` | Student attendance breakdown & 80% rule | None | `200 OK` | Total, present, absent counts, percentage, and `isEligible` status flag |
 
